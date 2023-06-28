@@ -1,12 +1,17 @@
 import { ProductManager } from './ProductManager.js'
 import express from 'express'
 import fs from 'fs'
+import { Cart } from '/Cart.js'
+import { CartManager } from './CartManager.js'
 
 
 const manager = new ProductManager('../database/products.json')
+const manager2 = new CartManager('../database/carts.json')
 await manager.reset()
+await manager2.reset()
 
 try {
+
 
     await manager.crearProducto({
         title: 'Pan',
@@ -72,5 +77,50 @@ app.get('/products/:id', (req, res) => {
         }
     })
 })
+
+app.get('/cart/:cid', async (req, res) => {
+    try {
+        const persona = await manager2.buscarCartSegunId(req.params.cid)
+        res.json(persona)
+    } catch (error) {
+        res.status(404).json({ message: error.message })
+    }
+})
+
+app.post('/cart', async (req, res) => {
+
+    const cart = new Cart({
+        id: randomUUID(),
+        ...req.body
+    })
+
+    const agregada = await manager2.guardarCart(cart)
+    res.json(agregada)
+})
+
+
+app.post('/:cid/product/:pid', async (req, res) => {
+    try {
+        const { cid, pid } = req.params;
+        const carrito = await manager2.buscarCartSegunId(cid);
+        if (!carrito) {
+            return res.status(404).json({ message: 'El carrito no existe' });
+        }
+        const productoExistente = carrito.products.find(p => p.product === pid);
+        if (productoExistente) {
+            productoExistente.quantity++;
+        } else {
+            const nuevoProducto = {
+                product: pid,
+                quantity: 1
+            };
+            carrito.products.push(nuevoProducto);
+        }
+        await manager2.guardarCart(carrito);
+        res.json(carrito);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 const server = app.listen(8080)
