@@ -1,12 +1,12 @@
 import { ProductManager } from './ProductManager.js'
 import express from 'express'
 import fs from 'fs'
-import { Cart } from '/Cart.js'
+import { Cart } from './cart.js'
 import { CartManager } from './CartManager.js'
 
 
-const manager = new ProductManager('../database/products.json')
-const manager2 = new CartManager('../database/carts.json')
+const manager = new ProductManager('./database/products.json')
+const manager2 = new CartManager('./database/carts.json')
 await manager.reset()
 await manager2.reset()
 
